@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 export default function VoiceInput({ onTranscript, disabled }) {
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(false);
   const recognitionRef = useRef(null);
+  const onTranscriptRef = useRef(onTranscript);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    onTranscriptRef.current = onTranscript;
+  }, [onTranscript]);
+
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -30,17 +34,26 @@ export default function VoiceInput({ onTranscript, disabled }) {
             interim += e.results[i][0].transcript;
           }
         }
-        onTranscript(finalTranscript + interim, false);
+        onTranscriptRef.current(finalTranscript + interim, false);
       };
 
       recognition.onend = () => {
         setListening(false);
-        if (finalTranscript) onTranscript(finalTranscript, true);
+        if (finalTranscript) onTranscriptRef.current(finalTranscript, true);
       };
 
       recognition.onerror = () => setListening(false);
       recognitionRef.current = recognition;
     }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onerror = null;
+        try { recognitionRef.current.stop(); } catch {}
+      }
+    };
   }, []);
 
   const toggle = () => {

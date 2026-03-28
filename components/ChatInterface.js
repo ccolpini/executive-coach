@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import VoiceInput from "./VoiceInput";
 
 const RATING_CONFIG = {
@@ -27,8 +27,16 @@ const RATING_CONFIG = {
   },
 };
 
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function parseCoachResponse(text) {
-  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 }
 
 function Message({ msg, index }) {
@@ -88,10 +96,8 @@ function Message({ msg, index }) {
         className="mb-7 px-5 py-5"
         style={{
           background: cfg.cardBg,
-          borderLeft: `4px solid ${cfg.cardBorder}`,
           border: `1px solid ${cfg.cardBorder}22`,
-          borderLeftWidth: "4px",
-          borderLeftColor: cfg.cardBorder,
+          borderLeft: `4px solid ${cfg.cardBorder}`,
           boxShadow: "0 2px 8px 0 rgba(26,26,46,0.06)",
           ...style,
         }}
@@ -139,6 +145,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const conversationHistoryRef = useRef([]);
+  const reloadTimerRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -151,9 +158,13 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
     ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
   }, [input]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    return () => clearTimeout(reloadTimerRef.current);
+  }, []);
+
   useEffect(() => {
     if (activeScenario) loadScenario(activeScenario);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadScenario is intentionally excluded; weekNumber covers its dependency
   }, [activeScenario, weekNumber]);
 
   async function loadScenario(scenarioId) {
@@ -182,9 +193,9 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
     setLoading(false);
   }
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e, directText) {
     e?.preventDefault();
-    const text = input.trim();
+    const text = (directText || input).trim();
     if (!text || loading || !hasScenario) return;
 
     setInput("");
@@ -217,7 +228,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
       });
 
       onRatingUpdate(data.rating);
-      setTimeout(() => loadScenario(activeScenario), 900);
+      reloadTimerRef.current = setTimeout(() => loadScenario(activeScenario), 900);
     } catch (e) {
       setMessages((prev) => [
         ...prev.filter((m) => m.role !== "loading"),
@@ -283,7 +294,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
             disabled={loading || !hasScenario}
             onTranscript={(text, isFinal) => {
               setInput(text);
-              if (isFinal && text.trim()) handleSubmit();
+              if (isFinal && text.trim()) handleSubmit(null, text);
             }}
           />
           <textarea
