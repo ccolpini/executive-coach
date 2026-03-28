@@ -142,10 +142,10 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [hasScenario, setHasScenario] = useState(false);
+  const [awaitingNext, setAwaitingNext] = useState(false);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const conversationHistoryRef = useRef([]);
-  const reloadTimerRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -159,10 +159,6 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
   }, [input]);
 
   useEffect(() => {
-    return () => clearTimeout(reloadTimerRef.current);
-  }, []);
-
-  useEffect(() => {
     if (activeScenario) loadScenario(activeScenario);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loadScenario is intentionally excluded; weekNumber covers its dependency
   }, [activeScenario, weekNumber]);
@@ -172,6 +168,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
     setMessages([]);
     conversationHistoryRef.current = [];
     setHasScenario(false);
+    setAwaitingNext(false);
 
     try {
       const res = await fetch("/api/coach", {
@@ -228,7 +225,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
       });
 
       onRatingUpdate(data.rating);
-      reloadTimerRef.current = setTimeout(() => loadScenario(activeScenario), 900);
+      setAwaitingNext(true);
     } catch (e) {
       setMessages((prev) => [
         ...prev.filter((m) => m.role !== "loading"),
@@ -289,54 +286,95 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
         className="px-4 py-3"
         style={{ background: "#FFFFFF", borderTop: "1.5px solid #E8E8F0" }}
       >
-        <form onSubmit={handleSubmit} className="flex items-end gap-2">
-          <VoiceInput
-            disabled={loading || !hasScenario}
-            onTranscript={(text, isFinal) => {
-              setInput(text);
-              if (isFinal && text.trim()) handleSubmit(null, text);
-            }}
-          />
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={loading || !hasScenario}
-            placeholder={
-              !hasScenario
-                ? "Select a scenario to start…"
-                : "Type your response… (Enter to submit, Shift+Enter for newline)"
-            }
-            rows={1}
-            className="flex-1 font-sans text-sm resize-none focus:outline-none disabled:opacity-40 min-h-[44px] max-h-[160px] leading-relaxed px-4 py-2.5 transition-all"
-            style={{
-              background: "#FAFAF7",
-              color: "#1A1A2E",
-              border: "1.5px solid #E8E8F0",
-              outline: "none",
-            }}
-            onFocus={(e) => { e.target.style.borderColor = "#2D4CC8"; }}
-            onBlur={(e) => { e.target.style.borderColor = "#E8E8F0"; }}
-          />
-          <button
-            type="submit"
-            disabled={loading || !input.trim() || !hasScenario}
-            className="flex items-center justify-center w-10 h-10 font-sans font-semibold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-            style={{
-              background: "#E8603C",
-              color: "#FFFFFF",
-              boxShadow: "0 4px 14px 0 rgba(232,96,60,0.30)",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#D4522F"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "#E8603C"; }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
-        </form>
+        {awaitingNext ? (
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => loadScenario(activeScenario)}
+              className="flex items-center gap-2 px-5 py-2.5 font-sans text-sm font-semibold transition-all"
+              style={{
+                background: "#2D4CC8",
+                color: "#FFFFFF",
+                boxShadow: "0 4px 14px 0 rgba(45,76,200,0.25)",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#1E3694"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#2D4CC8"; }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              Next Scenario
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex items-end gap-2">
+            <VoiceInput
+              disabled={loading || !hasScenario}
+              onTranscript={(text, isFinal) => {
+                setInput(text);
+                if (isFinal && text.trim()) handleSubmit(null, text);
+              }}
+            />
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={loading || !hasScenario}
+              placeholder={
+                !hasScenario
+                  ? "Select a scenario to start…"
+                  : "Type your response… (Enter to submit, Shift+Enter for newline)"
+              }
+              rows={1}
+              className="flex-1 font-sans text-sm resize-none focus:outline-none disabled:opacity-40 min-h-[44px] max-h-[160px] leading-relaxed px-4 py-2.5 transition-all"
+              style={{
+                background: "#FAFAF7",
+                color: "#1A1A2E",
+                border: "1.5px solid #E8E8F0",
+                outline: "none",
+              }}
+              onFocus={(e) => { e.target.style.borderColor = "#2D4CC8"; }}
+              onBlur={(e) => { e.target.style.borderColor = "#E8E8F0"; }}
+            />
+            {hasScenario && !loading && (
+              <button
+                type="button"
+                onClick={() => loadScenario(activeScenario)}
+                title="Skip this scenario"
+                className="flex items-center justify-center w-10 h-10 font-sans text-sm transition-all shrink-0"
+                style={{
+                  background: "transparent",
+                  color: "#6B6B8A",
+                  border: "1.5px solid #E8E8F0",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2D4CC8"; e.currentTarget.style.color = "#2D4CC8"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#E8E8F0"; e.currentTarget.style.color = "#6B6B8A"; }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 4 15 12 5 20 5 4" />
+                  <line x1="19" y1="5" x2="19" y2="19" />
+                </svg>
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={loading || !input.trim() || !hasScenario}
+              className="flex items-center justify-center w-10 h-10 font-sans font-semibold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+              style={{
+                background: "#E8603C",
+                color: "#FFFFFF",
+                boxShadow: "0 4px 14px 0 rgba(232,96,60,0.30)",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#D4522F"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#E8603C"; }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ const frameworks = [
   { name: "Gallo: Talk Like TED", label: "Gallo · Talk Like TED", weeks: [9, 10, 11, 12] },
 ];
 
-export default function Sidebar({ currentWeek, onWeekChange }) {
+export default function Sidebar({ currentWeek, onWeekChange, allStats = {} }) {
   const week = CURRICULUM.find((w) => w.week === currentWeek);
 
   return (
@@ -65,6 +65,7 @@ export default function Sidebar({ currentWeek, onWeekChange }) {
               </div>
               {weekObjs.map((w) => {
                 const isActive = w.week === currentWeek;
+                const weekStats = allStats[w.week];
                 return (
                   <button
                     key={w.week}
@@ -91,9 +92,20 @@ export default function Sidebar({ currentWeek, onWeekChange }) {
                     <span className="font-mono text-xs font-medium w-6 shrink-0" style={{ color: isActive ? "#2D4CC8" : "#C8C8D8" }}>
                       W{w.week}
                     </span>
-                    <span className={`font-sans text-sm leading-tight ${isActive ? "font-semibold" : "font-normal"}`}>
+                    <span className={`font-sans text-sm leading-tight flex-1 ${isActive ? "font-semibold" : "font-normal"}`}>
                       {w.title}
                     </span>
+                    {weekStats && weekStats.reps > 0 && (
+                      <span
+                        className="font-mono text-xs shrink-0 px-1.5 py-0.5"
+                        style={{
+                          background: weekStats.strong > weekStats.needs_work ? "rgba(26,122,74,0.1)" : "rgba(107,107,138,0.1)",
+                          color: weekStats.strong > weekStats.needs_work ? "#1A7A4A" : "#6B6B8A",
+                        }}
+                      >
+                        {weekStats.reps}
+                      </span>
+                    )}
                   </button>
                 );
               })}

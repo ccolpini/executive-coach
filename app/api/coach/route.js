@@ -29,20 +29,40 @@ export async function POST(req) {
         { role: "user", content: userMessage },
       ];
 
+      const ratingTool = {
+        name: "submit_evaluation",
+        description: "Submit your coaching evaluation with a structured rating and feedback.",
+        input_schema: {
+          type: "object",
+          properties: {
+            rating: {
+              type: "string",
+              enum: ["strong", "decent", "needs_work"],
+              description: "Overall rating: 'strong' if the response nails the week's criteria, 'decent' if partially there, 'needs_work' if it misses key criteria.",
+            },
+            feedback: {
+              type: "string",
+              description: "Your full coaching feedback in markdown. Include: **What worked** (if applicable), **Fix this** (quote their words, explain the issue), **Rewrite** (improved version), and **Next rep** (follow-up question).",
+            },
+          },
+          required: ["rating", "feedback"],
+        },
+      };
+
       const msg = await client.messages.create({
         model: "claude-sonnet-4-20250514",
         max_tokens: 500,
         system: systemPrompt,
         messages,
+        tools: [ratingTool],
+        tool_choice: { type: "tool", name: "submit_evaluation" },
       });
 
-      const responseText = msg.content[0].text;
+      const toolBlock = msg.content.find((b) => b.type === "tool_use");
+      const rating = toolBlock?.input?.rating || "decent";
+      const feedback = toolBlock?.input?.feedback || "Unable to evaluate. Please try again.";
 
-      let rating = "decent";
-      if (/\*\*STRONG\*\*/i.test(responseText)) rating = "strong";
-      else if (/\*\*NEEDS WORK\*\*/i.test(responseText)) rating = "needs_work";
-
-      return Response.json({ content: responseText, rating });
+      return Response.json({ content: feedback, rating });
     }
 
     return Response.json({ error: "Unknown request type" }, { status: 400 });
