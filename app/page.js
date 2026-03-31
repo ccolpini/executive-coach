@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "@/components/Sidebar";
 import ChatInterface from "@/components/ChatInterface";
 import ScenarioButtons from "@/components/ScenarioButtons";
@@ -66,14 +67,20 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen bg-brand-bg overflow-hidden font-sans">
+    <div className="flex h-screen overflow-hidden font-sans" style={{ background: "#0a0d1a" }}>
       {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-30 lg:hidden"
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <div className={`
         fixed inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-in-out
@@ -88,14 +95,17 @@ export default function Home() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Gradient header */}
+        {/* Top bar */}
         <div
-          className="px-4 sm:px-6 py-4 flex items-center gap-3"
-          style={{ background: "linear-gradient(135deg, #2D4CC8 0%, #0D1B6E 100%)" }}
+          className="px-4 sm:px-6 py-3 flex items-center gap-3 glass"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-white/70 hover:text-white transition-colors shrink-0"
+            className="lg:hidden shrink-0 p-1.5 rounded-lg transition-colors"
+            style={{ color: "#a0aec0" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#FFFFFF"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "#a0aec0"; e.currentTarget.style.background = "transparent"; }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="6" x2="21" y2="6" />
@@ -103,12 +113,22 @@ export default function Home() {
               <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
-          <span className="text-white/50 text-sm font-mono">Week {week.week}</span>
-          <span className="text-white font-display font-bold text-xl tracking-tight truncate">
+          <span className="font-mono text-xs font-medium tracking-widest uppercase" style={{ color: "#7B2FFF" }}>
+            Week {week.week}
+          </span>
+          <span className="font-display font-bold text-lg tracking-tight truncate text-white">
             {week.title}
           </span>
-          <span className="text-white/30 text-sm hidden sm:block">·</span>
-          <span className="text-white/60 text-sm hidden sm:block font-sans">{week.framework}</span>
+          <span className="hidden sm:block text-sm" style={{ color: "#5a6578" }}>·</span>
+          <span className="hidden sm:block text-sm font-sans" style={{ color: "#a0aec0" }}>{week.framework}</span>
+          <div className="flex-1" />
+          {/* User avatar */}
+          <div
+            className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center font-display font-bold text-xs"
+            style={{ background: "linear-gradient(135deg, #7B2FFF, #FF4D8D)", color: "#FFFFFF" }}
+          >
+            EC
+          </div>
         </div>
 
         <SessionStats stats={stats} />
