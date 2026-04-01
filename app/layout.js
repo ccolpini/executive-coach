@@ -1,11 +1,10 @@
-import { Playfair_Display, DM_Sans, DM_Mono } from "next/font/google";
+import { Syne, DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
 
-const playfair = Playfair_Display({
+const syne = Syne({
   subsets: ["latin"],
-  variable: "--font-playfair",
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  variable: "--font-syne",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const dmSans = DM_Sans({
@@ -28,7 +27,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${playfair.variable} ${dmSans.variable} ${dmMono.variable} antialiased`}>
+      <body className={`${syne.variable} ${dmSans.variable} ${dmMono.variable} antialiased`}>
         {children}
       </body>
     </html>

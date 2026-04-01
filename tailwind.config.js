@@ -8,39 +8,66 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: {
-          bg: "#FAFAF7",
-          cobalt: "#2D4CC8",
-          "cobalt-dark": "#1E3694",
-          navy: "#0D1B6E",
-          coral: "#E8603C",
-          amber: "#D4940A",
-          emerald: "#1A7A4A",
-          surface: "#FFFFFF",
-          "text-primary": "#1A1A2E",
-          "text-secondary": "#6B6B8A",
-          border: "#E8E8F0",
+        dark: {
+          base: "#0a0d1a",
+          surface: "rgba(255,255,255,0.05)",
+          "surface-hover": "rgba(255,255,255,0.08)",
+          "surface-active": "rgba(255,255,255,0.12)",
+          border: "rgba(255,255,255,0.08)",
+          "border-bright": "rgba(255,255,255,0.15)",
+        },
+        accent: {
+          purple: "#7B2FFF",
+          cyan: "#00D4FF",
+          coral: "#FF4D8D",
+          magenta: "#FF4D8D",
+        },
+        text: {
+          primary: "#FFFFFF",
+          secondary: "#a0aec0",
+          muted: "#5a6578",
         },
       },
       fontFamily: {
-        display: ["var(--font-playfair)", "Georgia", "serif"],
+        display: ["var(--font-syne)", "system-ui", "sans-serif"],
         sans: ["var(--font-dm-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-dm-mono)", "monospace"],
       },
       keyframes: {
         "fade-up": {
-          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "scale-pop": {
+          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 0 0 rgba(255,77,141,0.4)" },
+          "50%": { boxShadow: "0 0 0 8px rgba(255,77,141,0)" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
         },
       },
       animation: {
-        "fade-up": "fade-up 0.25s ease-out forwards",
+        "fade-up": "fade-up 0.35s ease-out forwards",
+        "scale-pop": "scale-pop 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards",
+        "pulse-glow": "pulse-glow 1.4s ease-in-out infinite",
+        shimmer: "shimmer 2s linear infinite",
+      },
+      backdropBlur: {
+        glass: "12px",
       },
       boxShadow: {
-        card: "0 1px 4px 0 rgba(26,26,46,0.07), 0 4px 16px 0 rgba(26,26,46,0.05)",
-        "card-md": "0 2px 8px 0 rgba(26,26,46,0.08), 0 8px 24px 0 rgba(26,26,46,0.06)",
-        cobalt: "0 4px 14px 0 rgba(45,76,200,0.25)",
-        coral: "0 4px 14px 0 rgba(232,96,60,0.25)",
+        glass: "0 4px 30px rgba(0,0,0,0.3)",
+        "glow-purple": "0 4px 20px rgba(123,47,255,0.25)",
+        "glow-cyan": "0 4px 20px rgba(0,212,255,0.25)",
+        "glow-coral": "0 4px 20px rgba(255,77,141,0.25)",
+        "glow-purple-lg": "0 8px 40px rgba(123,47,255,0.3)",
+        "glow-cyan-lg": "0 8px 40px rgba(0,212,255,0.3)",
+        "glow-coral-lg": "0 8px 40px rgba(255,77,141,0.3)",
       },
     },
   },

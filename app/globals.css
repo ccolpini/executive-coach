@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #FAFAF7;
-  --foreground: #1A1A2E;
+  --background: #0a0d1a;
+  --foreground: #FFFFFF;
 }
 
 body {
@@ -19,9 +19,24 @@ body {
   box-sizing: border-box;
 }
 
+/* Glass card utility */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-bright {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 /* Coach response markdown */
 .coach-response strong {
-  color: #1A1A2E;
+  color: #FFFFFF;
   font-weight: 700;
 }
 
@@ -37,9 +52,33 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #E8E8F0;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c8c8d8;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Gradient text utility */
+.gradient-text-purple {
+  background: linear-gradient(135deg, #7B2FFF, #00D4FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-coral {
+  background: linear-gradient(135deg, #FF4D8D, #7B2FFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient mesh for hero cards */
+.gradient-mesh {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(123, 47, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(255, 77, 141, 0.08) 0%, transparent 50%),
+    rgba(255, 255, 255, 0.03);
 }
