@@ -47,6 +47,7 @@ const messageVariants = {
     y: 0,
     transition: { delay: i * 0.04, duration: 0.35, ease: "easeOut" },
   }),
+  exit: { opacity: 0, transition: { duration: 0.15 } },
 };
 
 const coachCardVariants = {
@@ -56,7 +57,11 @@ const coachCardVariants = {
     scale: 1,
     transition: { duration: 0.3, ease: [0.34, 1.56, 0.64, 1] },
   },
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.15 } },
 };
+
+let nextMsgId = 0;
+function msgId() { return ++nextMsgId; }
 
 function Message({ msg, index }) {
   if (msg.role === "scenario") {
@@ -66,6 +71,7 @@ function Message({ msg, index }) {
         custom={index}
         initial="hidden"
         animate="visible"
+        exit="exit"
         variants={messageVariants}
       >
         <div className="flex items-center gap-3 mb-3">
@@ -99,6 +105,7 @@ function Message({ msg, index }) {
         custom={index}
         initial="hidden"
         animate="visible"
+        exit="exit"
         variants={messageVariants}
       >
         <div
@@ -123,6 +130,7 @@ function Message({ msg, index }) {
         className="mb-7 px-5 py-5 rounded-xl"
         initial="hidden"
         animate="visible"
+        exit="exit"
         variants={coachCardVariants}
         style={{
           background: cfg.glowColor,
@@ -155,6 +163,7 @@ function Message({ msg, index }) {
         className="mb-7 px-5 py-4 rounded-xl glass"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
+        exit={{ opacity: 0, transition: { duration: 0.15 } }}
       >
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5">
@@ -212,14 +221,14 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
-      const scenarioMsg = { role: "scenario", content: data.content };
+      const scenarioMsg = { id: msgId(), role: "scenario", content: data.content };
       setMessages([scenarioMsg]);
       conversationHistoryRef.current = [
         { role: "user", content: `[Scenario]: ${data.content}` },
       ];
       setHasScenario(true);
     } catch (e) {
-      setMessages([{ role: "scenario", content: `Error: ${e.message}. Check your API key in .env.local and restart the server.` }]);
+      setMessages([{ id: msgId(), role: "scenario", content: `Error: ${e.message}. Check your API key in .env.local and restart the server.` }]);
     }
     setLoading(false);
   }
@@ -230,7 +239,9 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
     if (!text || loading || !hasScenario) return;
 
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: text }, { role: "loading" }]);
+    const userMsgId = msgId();
+    const loadingMsgId = msgId();
+    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: text }, { id: loadingMsgId, role: "loading" }]);
     setLoading(true);
 
     try {
@@ -255,7 +266,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
 
       setMessages((prev) => {
         const without = prev.filter((m) => m.role !== "loading");
-        return [...without, { role: "coach", content: data.content, rating: data.rating }];
+        return [...without, { id: msgId(), role: "coach", content: data.content, rating: data.rating }];
       });
 
       onRatingUpdate(data.rating);
@@ -263,7 +274,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
     } catch (e) {
       setMessages((prev) => [
         ...prev.filter((m) => m.role !== "loading"),
-        { role: "coach", content: `Error: ${e.message}`, rating: "needs_work" },
+        { id: msgId(), role: "coach", content: `Error: ${e.message}`, rating: "needs_work" },
       ]);
     }
     setLoading(false);
@@ -322,9 +333,9 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
             <div className="font-sans text-sm" style={{ color: "#5a6578" }}>Setting up your scenario…</div>
           </div>
         )}
-        <AnimatePresence>
+        <AnimatePresence mode="popLayout">
           {messages.map((msg, i) => (
-            <Message key={i} msg={msg} index={i} />
+            <Message key={msg.id} msg={msg} index={i} />
           ))}
         </AnimatePresence>
         <div ref={bottomRef} />

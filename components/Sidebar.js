@@ -33,7 +33,7 @@ const frameworkIcons = {
   ),
 };
 
-export default function Sidebar({ currentWeek, onWeekChange, allStats = {} }) {
+export default function Sidebar({ currentWeek, onWeekChange, onNewSession, allStats = {} }) {
   const week = CURRICULUM.find((w) => w.week === currentWeek);
 
   return (
@@ -54,6 +54,7 @@ export default function Sidebar({ currentWeek, onWeekChange, allStats = {} }) {
       {/* New Session button */}
       <div className="px-4 mb-4">
         <button
+          onClick={onNewSession}
           className="w-full py-2 px-4 rounded-full font-sans text-sm font-semibold transition-all flex items-center justify-center gap-2"
           style={{
             background: "linear-gradient(135deg, #FF4D8D, #7B2FFF)",
