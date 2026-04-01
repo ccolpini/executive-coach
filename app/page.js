@@ -66,6 +66,11 @@ export default function Home() {
     });
   }
 
+  function handleNewSession() {
+    setActiveScenario(null);
+    setSidebarOpen(false);
+  }
+
   return (
     <div className="flex h-screen overflow-hidden font-sans" style={{ background: "#0a0d1a" }}>
       {/* Mobile sidebar overlay */}
@@ -90,6 +95,7 @@ export default function Home() {
         <Sidebar
           currentWeek={currentWeek}
           onWeekChange={handleWeekChange}
+          onNewSession={handleNewSession}
           allStats={loaded ? allStats : {}}
         />
       </div>
