@@ -7,6 +7,7 @@ import ChatInterface from "@/components/ChatInterface";
 import ScenarioButtons from "@/components/ScenarioButtons";
 import SessionStats from "@/components/SessionStats";
 import { getWeek } from "@/lib/curriculum";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const STORAGE_KEY = "executive-coach-stats";
 
@@ -72,6 +73,7 @@ export default function Home() {
   }
 
   return (
+    <ErrorBoundary>
     <div className="flex h-screen overflow-hidden font-sans" style={{ background: "#0a0d1a" }}>
       {/* Mobile sidebar overlay */}
       <AnimatePresence>
@@ -108,10 +110,8 @@ export default function Home() {
         >
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden shrink-0 p-1.5 rounded-lg transition-colors"
-            style={{ color: "#a0aec0" }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#FFFFFF"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "#a0aec0"; e.currentTarget.style.background = "transparent"; }}
+            aria-label="Open navigation menu"
+            className="lg:hidden shrink-0 p-1.5 rounded-lg transition-colors text-text-secondary hover:text-white hover:bg-dark-surface-hover"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="6" x2="21" y2="6" />
@@ -153,5 +153,6 @@ export default function Home() {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

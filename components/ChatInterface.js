@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import VoiceInput from "./VoiceInput";
+
+const API_ENDPOINT = "/api/coach";
+const MAX_INPUT_LENGTH = 2000;
 
 const RATING_CONFIG = {
   strong: {
@@ -28,16 +31,15 @@ const RATING_CONFIG = {
   },
 };
 
-function escapeHtml(text) {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function parseCoachResponse(text) {
-  return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+function SafeMarkdown({ text }) {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+      )}
+    </>
+  );
 }
 
 const messageVariants = {
@@ -63,7 +65,7 @@ const coachCardVariants = {
 let nextMsgId = 0;
 function msgId() { return ++nextMsgId; }
 
-function Message({ msg, index }) {
+const Message = memo(function Message({ msg, index }) {
   if (msg.role === "scenario") {
     return (
       <motion.div
@@ -151,8 +153,9 @@ function Message({ msg, index }) {
         <div
           className="font-sans text-sm leading-relaxed coach-response"
           style={{ color: "#a0aec0" }}
-          dangerouslySetInnerHTML={{ __html: parseCoachResponse(msg.content) }}
-        />
+        >
+          <SafeMarkdown text={msg.content} />
+        </div>
       </motion.div>
     );
   }
@@ -178,6 +181,14 @@ function Message({ msg, index }) {
   }
 
   return null;
+});
+
+async function fetchWithRetry(url, options, { retries = 2, baseDelay = 1000 } = {}) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url, options);
+    if (res.ok || res.status < 500 || attempt === retries) return res;
+    await new Promise((r) => setTimeout(r, baseDelay * 2 ** attempt));
+  }
 }
 
 export default function ChatInterface({ weekNumber, activeScenario, onRatingUpdate }) {
@@ -189,6 +200,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const conversationHistoryRef = useRef([]);
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -206,7 +218,15 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loadScenario is intentionally excluded; weekNumber covers its dependency
   }, [activeScenario, weekNumber]);
 
+  useEffect(() => {
+    return () => abortControllerRef.current?.abort();
+  }, []);
+
   async function loadScenario(scenarioId) {
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setLoading(true);
     setMessages([]);
     conversationHistoryRef.current = [];
@@ -214,13 +234,15 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
     setAwaitingNext(false);
 
     try {
-      const res = await fetch("/api/coach", {
+      const res = await fetchWithRetry(API_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "scenario", weekNumber, scenarioId }),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+      if (controller.signal.aborted) return;
       const scenarioMsg = { id: msgId(), role: "scenario", content: data.content };
       setMessages([scenarioMsg]);
       conversationHistoryRef.current = [
@@ -228,6 +250,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
       ];
       setHasScenario(true);
     } catch (e) {
+      if (e.name === "AbortError") return;
       setMessages([{ id: msgId(), role: "scenario", content: `Error: ${e.message}. Check your API key in .env.local and restart the server.` }]);
     }
     setLoading(false);
@@ -245,7 +268,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
     setLoading(true);
 
     try {
-      const res = await fetch("/api/coach", {
+      const res = await fetchWithRetry(API_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -302,7 +325,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
               className="w-16 h-16 rounded-2xl flex items-center justify-center"
               style={{ background: "linear-gradient(135deg, rgba(123,47,255,0.2), rgba(0,212,255,0.2))", border: "1px solid rgba(255,255,255,0.1)" }}
             >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#grad)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#grad)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <defs>
                   <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#7B2FFF" />
@@ -380,6 +403,8 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={loading || !hasScenario}
+              maxLength={MAX_INPUT_LENGTH}
+              aria-label="Your response to the scenario"
               placeholder={
                 !hasScenario
                   ? "Select a scenario to start…"
@@ -400,6 +425,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
               <motion.button
                 type="button"
                 onClick={() => loadScenario(activeScenario)}
+                aria-label="Skip this scenario"
                 title="Skip this scenario"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -419,6 +445,7 @@ export default function ChatInterface({ weekNumber, activeScenario, onRatingUpda
             <motion.button
               type="submit"
               disabled={loading || !input.trim() || !hasScenario}
+              aria-label="Submit response"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="flex items-center justify-center w-10 h-10 rounded-xl font-sans font-semibold text-sm transition-all disabled:opacity-20 disabled:cursor-not-allowed shrink-0"

@@ -1,10 +1,13 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 
-export default function SessionStats({ stats }) {
-  const total = stats.strong + stats.decent + stats.needs_work;
-  const strongPct = total > 0 ? Math.round((stats.strong / total) * 100) : 0;
+export default memo(function SessionStats({ stats }) {
+  const { total, strongPct } = useMemo(() => {
+    const t = stats.strong + stats.decent + stats.needs_work;
+    return { total: t, strongPct: t > 0 ? Math.round((stats.strong / t) * 100) : 0 };
+  }, [stats.strong, stats.decent, stats.needs_work]);
 
   return (
     <div
@@ -32,7 +35,15 @@ export default function SessionStats({ stats }) {
         <>
           <div className="w-px h-5 shrink-0" style={{ background: "rgba(255,255,255,0.08)" }} />
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <div
+              className="w-24 h-1.5 rounded-full overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.06)" }}
+              role="progressbar"
+              aria-valuenow={strongPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Strong rating percentage: ${strongPct}%`}
+            >
               <motion.div
                 className="h-full rounded-full"
                 style={{ background: "linear-gradient(90deg, #7B2FFF, #00D4FF)" }}
@@ -47,7 +58,7 @@ export default function SessionStats({ stats }) {
       )}
     </div>
   );
-}
+});
 
 function Pill({ label, value, gradient }) {
   return (
@@ -58,6 +69,7 @@ function Pill({ label, value, gradient }) {
       <span
         className="w-2 h-2 rounded-full shrink-0"
         style={{ background: gradient }}
+        aria-hidden="true"
       />
       <span className="font-bold text-white">{value}</span>
       <span style={{ color: "#5a6578" }}>{label}</span>

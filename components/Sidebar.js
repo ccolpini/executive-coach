@@ -55,14 +55,12 @@ export default function Sidebar({ currentWeek, onWeekChange, onNewSession, allSt
       <div className="px-4 mb-4">
         <button
           onClick={onNewSession}
-          className="w-full py-2 px-4 rounded-full font-sans text-sm font-semibold transition-all flex items-center justify-center gap-2"
+          className="w-full py-2 px-4 rounded-full font-sans text-sm font-semibold transition-all flex items-center justify-center gap-2 btn-new-session"
           style={{
             background: "linear-gradient(135deg, #FF4D8D, #7B2FFF)",
             color: "#FFFFFF",
             boxShadow: "0 4px 20px rgba(255,77,141,0.3)",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 6px 28px rgba(255,77,141,0.45)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(255,77,141,0.3)"; e.currentTarget.style.transform = "translateY(0)"; }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -122,23 +120,13 @@ export default function Sidebar({ currentWeek, onWeekChange, onNewSession, allSt
                   <button
                     key={w.week}
                     onClick={() => onWeekChange(w.week)}
-                    className="w-full text-left px-3 py-2 flex items-center gap-2.5 rounded-lg transition-all mb-0.5"
+                    className={`w-full text-left px-3 py-2 flex items-center gap-2.5 rounded-lg transition-all mb-0.5 ${
+                      isActive
+                        ? "bg-dark-surface-hover text-white"
+                        : "text-text-muted hover:bg-[rgba(255,255,255,0.04)] hover:text-text-secondary"
+                    }`}
                     style={{
-                      background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
                       borderLeft: isActive ? "3px solid #FF4D8D" : "3px solid transparent",
-                      color: isActive ? "#FFFFFF" : "#5a6578",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                        e.currentTarget.style.color = "#a0aec0";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.color = "#5a6578";
-                      }
                     }}
                   >
                     <span className="font-mono text-xs font-medium w-5 shrink-0" style={{ color: isActive ? "#FF4D8D" : "#3a4050" }}>

@@ -80,6 +80,12 @@ body {
   50% { box-shadow: 0 0 0 8px rgba(255,77,141,0); }
 }
 
+/* Button hover states */
+.btn-new-session:hover {
+  box-shadow: 0 6px 28px rgba(255,77,141,0.45) !important;
+  transform: translateY(-1px);
+}
+
 /* Gradient mesh for hero cards */
 .gradient-mesh {
   background:
